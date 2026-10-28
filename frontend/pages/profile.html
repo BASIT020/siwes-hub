@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Profile - SIWES Hub</title>
+  <link rel="stylesheet" href="/css/fonts.css">
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/css/forms.css">
+  <link rel="stylesheet" href="/css/icons.css">
+  <link rel="stylesheet" href="/css/responsive.css">
+</head>
+<body class="app-body">
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar"></aside>
+    <div class="app-main">
+      <header class="topbar" id="topbar"></header>
+      <main class="page-content" id="profileRoot">
+        <div class="page-head">
+          <div>
+            <h2>My Profile</h2>
+            <p>Your account and training details as stored in the SIWES database.</p>
+          </div>
+        </div>
+
+        <div class="grid-2" id="profileColumns">
+          <!-- Account details (students, read-only) -->
+          <div class="card" id="accountCard" style="display:none">
+            <div class="card-title"><i data-lucide="user-round"></i>Account</div>
+            <p class="small mb-2"><strong>Name:</strong> <span id="pfFullName">-</span></p>
+            <p class="small mb-2"><strong>Matric number:</strong> <span id="pfMatric">-</span></p>
+            <p class="small mb-2"><strong>Email:</strong> <span id="pfEmail">-</span></p>
+            <p class="small mb-2"><strong>Organization:</strong> <span id="pfOrg">-</span></p>
+            <p class="small mb-2"><strong>Supervisor:</strong> <span id="pfSupervisor">-</span></p>
+          </div>
+
+          <!-- Student: editable contact/academic fields -->
+          <div class="card" id="editableFields" style="display:none">
+            <div class="card-title"><i data-lucide="pencil"></i>My details</div>
+            <form id="profileForm" class="form-grid">
+              <div class="field">
+                <label for="pfDepartment">Department</label>
+                <input type="text" id="pfDepartment" name="department">
+              </div>
+              <div class="field">
+                <label for="pfFaculty">Faculty</label>
+                <input type="text" id="pfFaculty" name="faculty">
+              </div>
+              <div class="field">
+                <label for="pfLevel">Level</label>
+                <select id="pfLevel" name="level">
+                  <option value="">--</option>
+                  <option value="100">100</option>
+                  <option value="200">200</option>
+                  <option value="300">300</option>
+                  <option value="400">400</option>
+                  <option value="500">500</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="pfPhone">Phone</label>
+                <input type="tel" id="pfPhone" name="phone">
+              </div>
+              <div class="field">
+                <label for="pfStart">Training start</label>
+                <input type="date" id="pfStart" name="training_start_date">
+              </div>
+              <div class="field">
+                <label for="pfEnd">Training end</label>
+                <input type="date" id="pfEnd" name="training_end_date">
+              </div>
+            </form>
+            <div class="modal-actions" style="justify-content:flex-start; margin-top:1rem">
+              <button class="btn btn-primary" id="saveProfileBtn"><i data-lucide="save"></i>Save profile</button>
+            </div>
+          </div>
+
+          <!-- Supervisor/admin: read-only details -->
+          <div class="card" id="readOnlyFields" style="display:none">
+            <div class="card-title"><i data-lucide="id-card"></i>Details</div>
+            <div id="profileNameBlock">
+              <p class="small mb-2"><strong>Name:</strong> <span id="roName">-</span></p>
+              <p class="small mb-2"><strong>Username:</strong> <span id="roUsername">-</span></p>
+              <p class="small mb-2"><strong>Email:</strong> <span id="roEmail">-</span></p>
+              <p class="small mb-2"><strong>Role:</strong> <span id="roRole">-</span></p>
+            </div>
+            <table class="data-table mt-2" id="roDetailsTable">
+              <tbody id="roDetails"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Skills (students only) -->
+        <div class="card mt-2" id="skillsSection" style="display:none">
+          <div class="page-head" style="margin-bottom:1rem">
+            <div>
+              <h2 style="font-size:1.2rem; margin:0"><i data-lucide="sparkles"></i> Skills learned</h2>
+              <p style="margin:0.2rem 0 0">Record what you learned during the training - useful for your final report.</p>
+            </div>
+            <button class="btn btn-outline" id="newSkillBtn"><i data-lucide="plus"></i>Add skill</button>
+          </div>
+          <div id="skillsList"></div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/ui.js"></script>
+  <script src="/js/navigation.js"></script>
+  <script src="/js/notifications.js"></script>
+  <script src="/js/profile.js"></script>
+  <script>
+    window.addEventListener("load", () => {
+      initProfilePage();
+      document.getElementById("saveProfileBtn")?.addEventListener("click", saveProfile);
+    });
+  </script>
+</body>
+</html>

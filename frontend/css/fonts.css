@@ -1,0 +1,55 @@
+/* ==========================================================================
+   SIWES Hub - fonts.css
+   @font-face declarations for the offline-bundled fonts:
+     - Poppins 300/400/500/600/700 (body + UI text)
+     - Pacifico 400 (brand logo)
+   Files live in assets/vendor/fonts/ so the app works fully offline.
+   ========================================================================== */
+
+@font-face {
+  font-family: "Poppins";
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url("/assets/vendor/fonts/Poppins-300-latin.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Poppins";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/assets/vendor/fonts/Poppins-400-latin.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Poppins";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/assets/vendor/fonts/Poppins-500-latin.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Poppins";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/assets/vendor/fonts/Poppins-600-latin.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Poppins";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/assets/vendor/fonts/Poppins-700-latin.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Pacifico";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/assets/vendor/fonts/Pacifico-400-latin.woff2") format("woff2");
+}

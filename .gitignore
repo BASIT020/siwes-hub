@@ -1,0 +1,40 @@
+# =====================================================================
+#  SIWES Hub - ignore list
+# =====================================================================
+
+# Python / Django
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Writable application data (never commit real data)
+database/data/
+database/backups/
+database/server.log
+database/secret_key.txt
+server.log
+
+# Secret demonstration credentials stay local as well
+# (keep the file if you want to share demo logins with your class, but
+#  do not publish them)
+database/demo_credentials.txt
+
+# Environment files
+.env
+
+# Build outputs
+dist/
+deployment/cache/
+staticfiles/
+
+# Editor / OS noise
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
+Desktop.ini

@@ -1,0 +1,292 @@
+/* ==========================================================================
+   SIWES Hub - forms.css
+   Inputs, selects, validation feedback and the auth (login) screen.
+   ========================================================================== */
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.9rem 1.1rem;
+}
+
+.form-grid .full {
+  grid-column: 1 / -1;
+}
+
+.field label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--navy-800);
+  margin-bottom: 0.3rem;
+}
+
+.field .hint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+}
+
+.field input,
+.field select,
+.field textarea {
+  width: 100%;
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  color: var(--text-primary);
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.58rem 0.8rem;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.field textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  border-color: var(--purple-600);
+  box-shadow: 0 0 0 3px var(--purple-100);
+}
+
+.field input:disabled,
+.field select:disabled,
+.field textarea:disabled {
+  background: var(--bg-page);
+  color: var(--text-muted);
+}
+
+/* Error states */
+.field .error-message {
+  color: var(--danger);
+  font-size: 0.76rem;
+  margin-top: 0.25rem;
+}
+
+.field input.invalid,
+.field select.invalid,
+.field textarea.invalid {
+  border-color: var(--danger);
+}
+
+/* Inline form validation feedback */
+.field-error {
+  color: var(--danger);
+  font-size: 0.8rem;
+  margin: 0.2rem 0 0;
+}
+
+.form-error {
+  background: var(--danger-bg);
+  border: 1px solid #f4c6c6;
+  color: var(--danger);
+  border-radius: 10px;
+  padding: 0.7rem 1rem;
+  font-size: 0.87rem;
+  margin-bottom: 1rem;
+  display: flex;
+  gap: 0.55rem;
+  align-items: flex-start;
+}
+
+.form-note {
+  background: var(--info-bg);
+  border: 1px solid #cdd9f8;
+  color: var(--info);
+  border-radius: 10px;
+  padding: 0.7rem 1rem;
+  font-size: 0.87rem;
+  margin-bottom: 1rem;
+}
+
+/* Filter row above tables */
+.filter-row {
+  display: flex;
+  gap: 0.7rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 1.1rem;
+}
+
+.filter-row select,
+.filter-row input {
+  font-family: var(--font-body);
+  font-size: 0.87rem;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 0.5rem 0.7rem;
+  background: #fff;
+  color: var(--text-primary);
+  outline: none;
+}
+
+.filter-row input:focus,
+.filter-row select:focus {
+  border-color: var(--purple-600);
+}
+
+.filter-row .grow {
+  flex: 1;
+  min-width: 160px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Login page                                                          */
+/* ------------------------------------------------------------------ */
+.auth-body {
+  background:
+    radial-gradient(1200px 500px at 85% -10%, var(--purple-100) 0%, transparent 60%),
+    var(--bg-page);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2.2rem 1rem;
+}
+
+.auth-card {
+  width: min(780px, 100%);
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  box-shadow: var(--shadow-lg);
+  display: grid;
+  grid-template-columns: 1fr 0.95fr;
+  overflow: hidden;
+}
+
+.auth-side {
+  background: linear-gradient(160deg, #1e2340 0%, #2a2f5c 100%);
+  color: #dfe2f7;
+  padding: 2.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.auth-side .brand {
+  color: #fff;
+}
+
+.auth-side h2 {
+  color: #fff;
+  font-size: 1.35rem;
+}
+
+.auth-side ul {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 0.6rem;
+  font-size: 0.86rem;
+}
+
+.auth-side li {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+}
+
+.auth-side li svg {
+  width: 16px;
+  height: 16px;
+  margin-top: 3px;
+  color: #a39bff;
+  flex-shrink: 0;
+}
+
+.auth-main {
+  padding: 2.2rem 2rem 2.4rem;
+}
+
+.auth-main h2 {
+  font-size: 1.35rem;
+  margin-bottom: 0.3rem;
+}
+
+.auth-main .sub {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+}
+
+.auth-form {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.auth-form .field input {
+  padding: 0.7rem 0.9rem;
+}
+
+.auth-form .btn {
+  width: 100%;
+  margin-top: 0.3rem;
+}
+
+.register-hint {
+  margin-top: 1.4rem;
+  border-top: 1px dashed var(--border);
+  padding-top: 1rem;
+  text-align: center;
+}
+
+.register-hint p {
+  margin-bottom: 0.6rem;
+}
+
+/* Account-type toggle (registration page) ----------------------------------- */
+.account-type-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+  margin: 0.8rem 0 0.4rem;
+}
+
+.account-type-toggle button {
+  border: 1px solid var(--border);
+  background: var(--bg-page);
+  color: var(--text-secondary);
+  border-radius: 10px;
+  padding: 0.7rem 0.5rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.account-type-toggle button.active {
+  border-color: var(--purple-600);
+  color: var(--purple-600);
+  background: rgba(91, 33, 182, 0.07);
+}
+
+.auth-form .hint {
+  margin-top: 0.3rem;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.visit-site {
+  text-align: center;
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+}
+
+@media (max-width: 860px) {
+  .auth-card {
+    grid-template-columns: 1fr;
+  }
+  .auth-side {
+    display: none;
+  }
+}

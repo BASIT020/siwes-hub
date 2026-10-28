@@ -1,0 +1,14 @@
+# Requirements for SIWES Hub (development venv)
+
+# Core application
+Django==5.1
+djangorestframework==3.17.2
+
+# Transitive runtime dependencies (pinned for reproducible installs)
+asgiref==3.12.1
+sqlparse==0.6.0
+tzdata
+
+# Development / testing helpers (not needed by the portable runtime)
+requests==2.34.2     # used by tests/api_smoke.py
+python-docx==1.2.0   # used by tools/generate_docs.py

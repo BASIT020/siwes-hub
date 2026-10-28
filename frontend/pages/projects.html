@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SIWES Project - SIWES Hub</title>
+  <link rel="stylesheet" href="/css/fonts.css">
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/css/forms.css">
+  <link rel="stylesheet" href="/css/icons.css">
+  <link rel="stylesheet" href="/css/responsive.css">
+</head>
+<body class="app-body">
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar"></aside>
+    <div class="app-main">
+      <header class="topbar" id="topbar"></header>
+      <main class="page-content">
+        <div class="page-head">
+          <div>
+            <h2>SIWES Project</h2>
+            <p>One training project per student, submitted to the supervisor for approval.</p>
+          </div>
+        </div>
+
+        <!-- Students see their own project form/card here -->
+        <div id="studentProjectRoot" style="display:none"></div>
+
+        <!-- Supervisors/admins see the review list -->
+        <div id="projectsListWrap" style="display:none">
+          <div class="filter-row">
+            <select id="reviewStatusFilter">
+              <option value="">All projects</option>
+              <option value="not_submitted">Not submitted</option>
+              <option value="submitted">Awaiting review</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+            </select>
+          </div>
+          <div id="projectsList"></div>
+          <div id="projectsPager"></div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/ui.js"></script>
+  <script src="/js/navigation.js"></script>
+  <script src="/js/notifications.js"></script>
+  <script src="/js/projects.js"></script>
+  <script>window.addEventListener("load", initProjectsPage);</script>
+</body>
+</html>

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign in - SIWES Hub</title>
+  <link rel="stylesheet" href="/css/fonts.css">
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/css/forms.css">
+  <link rel="stylesheet" href="/css/icons.css">
+  <link rel="stylesheet" href="/css/responsive.css">
+</head>
+<body class="auth-body">
+
+  <div class="auth-card">
+    <!-- Left: brand panel -->
+    <div class="auth-side">
+      <a class="logo brand" href="/pages/landing.html">
+        <span class="logo-icon"><i data-lucide="graduation-cap"></i></span>
+        SIWES Hub
+      </a>
+      <h2>SIWES Management &amp; Monitoring Portal</h2>
+      <p class="small">Your digital logbook for the Students Industrial Work Experience Scheme.</p>
+      <ul>
+        <li><i data-lucide="book-open-text"></i><span>Daily activity logs with supervisor feedback</span></li>
+        <li><i data-lucide="calendar-check"></i><span>Verified attendance and attendance rates</span></li>
+        <li><i data-lucide="calendar-days"></i><span>Weekly reports reviewed week by week</span></li>
+        <li><i data-lucide="folder-git-2"></i><span>Final training project with approval flow</span></li>
+      </ul>
+      <div style="margin-top:auto">
+        <a class="visit-site small" href="/pages/landing.html">&larr; Back to the home page</a>
+      </div>
+    </div>
+
+    <!-- Right: sign-in form -->
+    <div class="auth-main">
+      <h2>Welcome back</h2>
+      <p class="sub">Sign in with the account given to you by the SIWES office.</p>
+
+      <form id="loginForm" class="auth-form" novalidate>
+        <div class="form-error" id="loginError" style="display:none">
+          <i data-lucide="alert-circle"></i><span></span>
+        </div>
+        <div class="field">
+          <label for="username">Username</label>
+          <input type="text" id="username" name="username" autocomplete="username" required>
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" autocomplete="current-password" required>
+        </div>
+        <button type="submit" class="btn btn-primary btn-lg"><i data-lucide="log-in"></i>Sign in</button>
+      </form>
+
+      <div class="register-hint">
+        <p class="small muted">New to the portal? Students and supervisors can create their own account.</p>
+        <a class="btn btn-outline btn-lg" href="/pages/register.html">
+          <i data-lucide="user-plus"></i>Create account
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script>
+    window.addEventListener("load", () => {
+      refreshIcons();
+      initLoginPage();
+    });
+  </script>
+</body>
+</html>

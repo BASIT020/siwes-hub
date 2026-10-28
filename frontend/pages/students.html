@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Students - SIWES Hub</title>
+  <link rel="stylesheet" href="/css/fonts.css">
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/css/forms.css">
+  <link rel="stylesheet" href="/css/icons.css">
+  <link rel="stylesheet" href="/css/responsive.css">
+</head>
+<body class="app-body">
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar"></aside>
+    <div class="app-main">
+      <header class="topbar" id="topbar"></header>
+      <main class="page-content">
+        <div class="page-head">
+          <div>
+            <h2>Students</h2>
+            <p id="studentsSubTitle">Registered students on the SIWES programme.</p>
+          </div>
+          <button class="btn btn-primary" id="newStudentBtn" style="display:none">
+            <i data-lucide="user-plus"></i>Register student
+          </button>
+        </div>
+
+        <div class="filter-row">
+          <input type="search" id="studentsSearch" class="grow" placeholder="Search by name, matric number or department...">
+          <input type="text" id="studentsDepartment" placeholder="Department (exact)">
+          <select id="studentsLevel">
+            <option value="">All levels</option>
+            <option value="100">100</option>
+            <option value="200">200</option>
+            <option value="300">300</option>
+            <option value="400">400</option>
+            <option value="500">500</option>
+            <option value="other">Other</option>
+          </select>
+          <select id="studentsActiveFilter">
+            <option value="">Active + deactivated</option>
+            <option value="true">Active only</option>
+            <option value="false">Deactivated only</option>
+          </select>
+        </div>
+
+        <div id="studentsList"></div>
+        <div id="studentsPager"></div>
+      </main>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/ui.js"></script>
+  <script src="/js/navigation.js"></script>
+  <script src="/js/notifications.js"></script>
+  <script src="/js/students.js"></script>
+  <script>window.addEventListener("load", initStudentsPage);</script>
+</body>
+</html>

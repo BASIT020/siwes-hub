@@ -1,0 +1,7 @@
+/* Force real SVG icons (lucide) inside inline-fe icons to not stretch */
+i[data-lucide] {
+  display: inline-block;
+  width: 1.05em;
+  height: 1.05em;
+  line-height: 1;
+}

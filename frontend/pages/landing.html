@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SIWES Hub - Management & Monitoring Portal</title>
+  <link rel="stylesheet" href="/css/fonts.css">
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/landing.css">
+  <link rel="stylesheet" href="/css/forms.css">
+  <link rel="stylesheet" href="/css/icons.css">
+  <link rel="stylesheet" href="/css/responsive.css">
+</head>
+<body>
+
+  <!-- ============ Header ============ -->
+  <header class="site-header">
+    <div class="container">
+      <a class="logo" href="/pages/landing.html">
+        <span class="logo-icon"><i data-lucide="graduation-cap"></i></span>
+        SIWES Hub
+      </a>
+      <nav class="main-nav">
+        <a href="#features">Features</a>
+        <a href="#roles">Roles</a>
+        <a href="#how-it-works">How it works</a>
+        <a href="#contact">Contact</a>
+      </nav>
+      <div class="header-actions">
+        <a class="btn btn-ghost btn-sm" href="/pages/login.html">Sign in</a>
+        <a class="btn btn-primary btn-sm" href="/pages/login.html"><i data-lucide="log-in"></i>Get started</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============ Hero ============ -->
+  <section class="hero">
+    <div class="container">
+      <div>
+        <span class="hero-eyebrow">Students · Supervisors · Administrators</span>
+        <h1>Student Industrial Work<br>Experience Scheme, <span class="accent">made simple</span></h1>
+        <p class="hero-subhead">One portal for the whole SIWES journey.</p>
+        <p class="hero-lead">SIWES Hub replaces paper logbooks with a digital workflow: students
+        record daily activities, supervisors review and approve, and the SIWES office monitors
+        the entire programme - attendance, projects, reports and all - in real time.</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary btn-lg" href="/pages/login.html"><i data-lucide="log-in"></i>Sign in to your portal</a>
+          <a class="btn btn-outline btn-lg" href="#how-it-works">See how it works</a>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <!-- CSS-built preview of a SIWES Hub dashboard (no screenshot needed) -->
+        <div class="mock-dashboard">
+          <div class="mock-topbar">
+            <span>▪ ▪ ▪</span><span>siwes-hub / dashboard</span><span>student@hub</span>
+          </div>
+          <div class="mock-grid">
+            <div class="mock-card"><div class="k">Placement</div><div class="v">FIRS</div></div>
+            <div class="mock-card"><div class="k">Daily logs</div><div class="v">24</div></div>
+            <div class="mock-card"><div class="k">Approved</div><div class="v">19</div></div>
+            <div class="mock-card"><div class="k">Attendance</div><div class="v">92%</div></div>
+            <div class="mock-card"><div class="k">Skills</div><div class="v">8</div></div>
+            <div class="mock-card"><div class="k">Pending</div><div class="v">3</div></div>
+          </div>
+          <div class="mock-rows">
+            <div class="mock-row"><span><span class="dot"></span>Week 6 report</span><span>approved</span></div>
+            <div class="mock-row"><span><span class="dot orange"></span>Daily log, Oct 20</span><span>awaiting review</span></div>
+            <div class="mock-row"><span><span class="dot blue"></span>Project: Inventory System</span><span>submitted</span></div>
+          </div>
+        </div>
+        <div class="mock-badge">
+          <span class="check"><i data-lucide="check"></i></span>
+          Log approved by ITF supervisor
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Features ============ -->
+  <section class="features" id="features">
+    <div class="container">
+      <h2 class="section-title">Everything the digital logbook should do</h2>
+      <p class="section-subtitle">Purpose-built modules for each part of the SIWES programme,
+      all sharing one secure database - never paper collecting dust.</p>
+      <div class="features-grid">
+        <div class="feature-card">
+          <span class="icon-chip"><i data-lucide="book-open-text"></i></span>
+          <h3>Daily logs</h3>
+          <p>Students record their activities day by day. Supervisors approve or reject with feedback.</p>
+        </div>
+        <div class="feature-card">
+          <span class="icon-chip blue"><i data-lucide="calendar-days"></i></span>
+          <h3>Weekly reports</h3>
+          <p>Weekly summaries with challenges and lessons learned, reviewed week by week.</p>
+        </div>
+        <div class="feature-card">
+          <span class="icon-chip green"><i data-lucide="calendar-check"></i></span>
+          <h3>Attendance</h3>
+          <p>Verified daily presence records with automatic attendance-rate statistics.</p>
+        </div>
+        <div class="feature-card">
+          <span class="icon-chip orange"><i data-lucide="folder-git-2"></i></span>
+          <h3>Projects</h3>
+          <p>Students register their training project and submit it for supervisor approval.</p>
+        </div>
+        <div class="feature-card">
+          <span class="icon-chip"><i data-lucide="megaphone"></i></span>
+          <h3>Announcements</h3>
+          <p>The SIWES office publishes notices to everyone, students or supervisors only.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Built for everyone (roles) ============ -->
+  <section class="roles" id="roles">
+    <div class="container">
+      <h2 class="section-title">Built for everyone</h2>
+      <p class="section-subtitle">Three role-based portals - the target audience shown in the reference design.</p>
+      <div class="roles-grid">
+        <div class="role-card">
+          <span class="icon-chip"><i data-lucide="graduation-cap"></i></span>
+          <h3>For Students</h3>
+          <ul>
+            <li>Daily logs, weekly reports and skills</li>
+            <li>See placement, organization and supervisor</li>
+            <li>Track approvals and supervisor feedback</li>
+          </ul>
+          <a class="role-link" href="/pages/login.html">Student portal <i data-lucide="arrow-right"></i></a>
+        </div>
+        <div class="role-card">
+          <span class="icon-chip blue"><i data-lucide="users-round"></i></span>
+          <h3>For Supervisors</h3>
+          <ul>
+            <li>Review queues for logs, reports, projects</li>
+            <li>Record and correct student attendance</li>
+            <li>Overview of every assigned student</li>
+          </ul>
+          <a class="role-link" href="/pages/login.html">Supervisor portal <i data-lucide="arrow-right"></i></a>
+        </div>
+        <div class="role-card">
+          <span class="icon-chip orange"><i data-lucide="shield-check"></i></span>
+          <h3>For Administrators</h3>
+          <ul>
+            <li>Manage students, hosts and supervisors</li>
+            <li>Assign placements and SIWES sessions</li>
+            <li>Full-portal statistics and audit trail</li>
+          </ul>
+          <a class="role-link" href="/pages/login.html">Admin portal <i data-lucide="arrow-right"></i></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Stats strip ============ -->
+  <section class="container">
+    <div class="stats-strip">
+      <div class="stat-item">
+        <span class="icon-chip"><i data-lucide="database"></i></span>
+        <span><span class="num">One database</span><br><span class="lbl">Every record lives in one SQLite database - logs, reports, attendance, projects</span></span>
+      </div>
+      <div class="stat-item">
+        <span class="icon-chip"><i data-lucide="shield"></i></span>
+        <span><span class="num">3 secured roles</span><br><span class="lbl">Student, Supervisor and Administrator permissions enforced server-side</span></span>
+      </div>
+      <div class="stat-item">
+        <span class="icon-chip"><i data-lucide="history"></i></span>
+        <span><span class="num">Full audit trail</span><br><span class="lbl">Every key action is logged: who did what, and when</span></span>
+      </div>
+      <div class="stat-item">
+        <span class="icon-chip"><i data-lucide="bell"></i></span>
+        <span><span class="num">Real-time notices</span><br><span class="lbl">In-app notifications the moment a log is reviewed or a project approved</span></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ How it works ============ -->
+  <section class="how-it-works" id="how-it-works">
+    <div class="container">
+      <h2 class="section-title">How it works</h2>
+      <p class="section-subtitle">From your first sign-in to your approved final report.</p>
+      <div class="steps">
+        <div class="step-card">
+          <span class="step-num">1</span>
+          <h3>Activation</h3>
+          <p>Create your account (or have the SIWES office register you) and get placed in a receiving organization with a supervisor.</p>
+        </div>
+        <div class="step-card">
+          <span class="step-num">2</span>
+          <h3>Record</h3>
+          <p>Students log daily activities, hours and skills while supervisors record attendance.</p>
+        </div>
+        <div class="step-card">
+          <span class="step-num">3</span>
+          <h3>Review</h3>
+          <p>Supervisors approve or return logs, weekly reports and the final project with feedback.</p>
+        </div>
+        <div class="step-card">
+          <span class="step-num">4</span>
+          <h3>Complete</h3>
+          <p>Attendance rates, approved logs and project status build a defensible SIWES record.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Contact ============ -->
+  <section class="about-contact" id="contact">
+    <div class="container">
+      <div class="contact-grid">
+        <div>
+          <h3>About SIWES Hub</h3>
+          <p class="muted small">A Students Industrial Work Experience Scheme (SIWES) management &amp;
+          monitoring portal for host universities and their partner organizations, built as
+          a Computer Science project: Python Django, a REST API and a vanilla web frontend.</p>
+          <div class="flex mt-2">
+            <a class="btn btn-primary" href="/pages/login.html"><i data-lucide="log-in"></i>Open the portal</a>
+            <a class="btn btn-outline" href="#features">Explore features</a>
+          </div>
+        </div>
+        <div>
+          <h3>Contact the SIWES office</h3>
+          <ul>
+            <li><i data-lucide="building-2"></i>SIWES Coordination Unit, Department of Computer Science</li>
+            <li><i data-lucide="mail"></i>siwes-office@university.edu</li>
+            <li><i data-lucide="phone"></i>+234 800 000 0000</li>
+            <li><i data-lucide="clock"></i>Mon - Fri, 8:00am - 4:00pm</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Footer ============ -->
+  <footer class="site-footer">
+    <div class="container">
+      <div>
+        <h4>SIWES Hub</h4>
+        <p class="small">Management and monitoring portal for the Students Industrial Work
+        Experience Scheme - digital logbooks, verified attendance and programme oversight.</p>
+      </div>
+      <div>
+        <h4>Portal</h4>
+        <ul>
+          <li><a href="/pages/login.html">Sign in</a></li>
+          <li><a href="#roles">Student portal</a></li>
+          <li><a href="#roles">Supervisor portal</a></li>
+          <li><a href="#roles">Admin portal</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Product</h4>
+        <ul>
+          <li><a href="#features">Features</a></li>
+          <li><a href="#how-it-works">How it works</a></li>
+          <li><a href="#contact">Contact</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Designed for</h4>
+        <ul>
+          <li>Students on industrial attachment</li>
+          <li>Institution supervisors</li>
+          <li>SIWES coordinators</li>
+          <li>Host organizations</li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-note">SIWES Hub - Student Industrial Work Experience Scheme portal. Academic project (2026).</div>
+  </footer>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script>
+    // Nav highlight for the anchor sections.
+    document.querySelectorAll(".main-nav a").forEach(link => {
+      if (link.getAttribute("href") === window.location.hash) link.classList.add("is-active");
+    });
+    window.addEventListener("hashchange", () => {
+      document.querySelectorAll(".main-nav a").forEach(link =>
+        link.classList.toggle("is-active", link.getAttribute("href") === window.location.hash));
+    });
+    // If a signed-in user lands here, jump straight to their dashboard.
+    window.addEventListener("load", async () => {
+      refreshIcons();
+      const user = await getCurrentUser();
+      if (user) window.location.href = dashboardPathForRole(user.role);
+    });
+  </script>
+</body>
+</html>

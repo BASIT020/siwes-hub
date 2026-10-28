@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings - SIWES Hub</title>
+  <link rel="stylesheet" href="/css/fonts.css">
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/css/forms.css">
+  <link rel="stylesheet" href="/css/icons.css">
+  <link rel="stylesheet" href="/css/responsive.css">
+</head>
+<body class="app-body">
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar"></aside>
+    <div class="app-main">
+      <header class="topbar" id="topbar"></header>
+      <main class="page-content">
+        <div class="page-head">
+          <div>
+            <h2>Settings</h2>
+            <p>Manage your account security.</p>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <!-- Account summary (live from the server) -->
+          <div class="card">
+            <div class="card-title"><i data-lucide="user-round"></i>Account summary</div>
+            <p class="small mb-2"><strong>Name:</strong> <span id="setFullName">-</span></p>
+            <p class="small mb-2"><strong>Username:</strong> <span id="setUsername">-</span></p>
+            <p class="small mb-2"><strong>Email:</strong> <span id="setEmail">-</span></p>
+            <p class="small mb-2"><strong>Phone:</strong> <span id="setPhone">-</span></p>
+            <p class="small mb-2"><strong>Role:</strong> <span id="setRole">-</span></p>
+            <hr style="border-color:var(--border); margin:1rem 0">
+            <button class="btn btn-danger" id="signOutBtn"><i data-lucide="log-out"></i>Sign out</button>
+          </div>
+
+          <!-- Change password -->
+          <div class="card">
+            <div class="card-title"><i data-lucide="key-round"></i>Change password</div>
+            <form id="passwordForm" class="form-grid" novalidate>
+              <div class="full form-error" id="passwordError" style="display:none">
+                <i data-lucide="alert-circle"></i><span></span>
+              </div>
+              <div class="field full">
+                <label for="current_password">Current password</label>
+                <input type="password" id="current_password" name="current_password" autocomplete="current-password" required>
+              </div>
+              <div class="field full">
+                <label for="new_password">New password</label>
+                <input type="password" id="new_password" name="new_password" autocomplete="new-password" required>
+                <p class="hint">At least 6 characters. Django's password rules also apply (server-side).</p>
+              </div>
+              <div class="field full">
+                <label for="confirm_password">Confirm new password</label>
+                <input type="password" id="confirm_password" name="confirm_password" autocomplete="new-password" required>
+              </div>
+              <div class="full modal-actions" style="justify-content:flex-start; margin-top:0.4rem">
+                <button type="submit" class="btn btn-primary"><i data-lucide="save"></i>Save new password</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/ui.js"></script>
+  <script src="/js/navigation.js"></script>
+  <script src="/js/notifications.js"></script>
+  <script src="/js/settings.js"></script>
+  <script>window.addEventListener("load", initSettingsPage);</script>
+</body>
+</html>
