@@ -66,7 +66,7 @@ async function initLoginPage() {
 
     // Small client-side validation, real validation happens server-side.
     let problem = "";
-    if (!username) problem = "Please enter your username.";
+    if (!username) problem = "Please enter your username or email.";
     else if (!password) problem = "Please enter your password.";
     if (problem) {
       errorBox.querySelector("span").textContent = problem;

@@ -82,12 +82,25 @@ class LoginView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        user = authenticate(request, username=username, password=password)
+        # Students sign in with their matriculation number (which is their
+        # username), but many try their email address instead. Accept both:
+        # resolve an email identifier to its single account and authenticate
+        # against that account's actual username. The password check itself
+        # is always performed by Django's authenticate() - the same generic
+        # failure message is returned for any failure, so no information
+        # about which identifier matched is ever revealed.
+        auth_username = username
+        if "@" in username and not User.objects.filter(username__iexact=username).exists():
+            by_email = User.objects.filter(email__iexact=username).first()
+            if by_email is not None:
+                auth_username = by_email.username
+
+        user = authenticate(request, username=auth_username, password=password)
         if user is None:
             # Tell deactivated accounts apart, but keep the inactive account's
             # message explicit (this endpoint is username-oracle safe because
             # authentication failures always return the same generic text).
-            existing = User.objects.filter(username__iexact=username).first()
+            existing = User.objects.filter(username__iexact=auth_username).first()
             if existing is not None and not existing.is_active:
                 if (
                     existing.role == User.ROLE_SUPERVISOR
