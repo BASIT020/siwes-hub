@@ -9,6 +9,7 @@ Attendance API views.
 Summaries are computed live from the same records - never hard-coded.
 """
 from django.utils import timezone
+from django.utils.dateparse import parse_date
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -88,12 +89,22 @@ class AttendanceListCreateView(APIView):
         except (StudentProfile.DoesNotExist, ValueError):
             return Response({"student": "Student not found."}, status=status.HTTP_400_BAD_REQUEST)
 
+        # Resolve the attendance date up front (R/W on POST; PATCH can never
+        # rewrite it because the serializer marks date/student read-only).
+        raw_date = payload.get("date")
+        if raw_date:
+            att_date = parse_date(str(raw_date))
+            if att_date is None:
+                return Response({"date": "Enter a valid date."}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            att_date = timezone.localdate()
+
         # A supervisor may only record attendance for their own assigned students.
         if user.is_supervisor_role and student not in get_supervisor_students(user.supervisor_profile):
             return Response(
                 {"detail": "That student is not assigned to you."}, status=status.HTTP_403_FORBIDDEN
             )
-        if Attendance.objects.filter(student=student, date=payload.get("date") or timezone.localdate()).exists():
+        if Attendance.objects.filter(student=student, date=att_date).exists():
             return Response(
                 {"date": "Attendance for that student/date already exists."},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -104,6 +115,7 @@ class AttendanceListCreateView(APIView):
         record = serializer.save(
             recorded_by=user,
             student=student,
+            date=att_date,
             verified_by=user.supervisor_profile if user.is_supervisor_role else None,
             verified_at=timezone.now() if user.is_supervisor_role else None,
         )
@@ -150,7 +162,15 @@ class AttendanceSummaryView(APIView):
                 return Response({"detail": "That student is not assigned to you."}, status=status.HTTP_403_FORBIDDEN)
             return Response(attendance_summary(student))
         if user.is_admin_role:
-            # Whole-programme summary
+            # Administrators get the whole-programme summary, or a per-student
+            # drill-down with ?student=<id> (honoured after all).
+            student_id = request.query_params.get("student")
+            if student_id:
+                try:
+                    student = StudentProfile.objects.get(pk=student_id)
+                except (StudentProfile.DoesNotExist, ValueError):
+                    return Response({"detail": "Student not found."}, status=status.HTTP_404_NOT_FOUND)
+                return Response(attendance_summary(student))
             qs = Attendance.objects.all()
             total = qs.count()
             present = qs.filter(status=Attendance.STATUS_PRESENT).count()

@@ -7,6 +7,8 @@ GET/PATCH /api/supervisors/<id>/ - administrator management
 import json  # noqa: F401 (kept for readability of documentation examples)
 
 from django.contrib.auth import get_user_model
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -70,8 +72,13 @@ class SupervisorListCreateView(APIView):
             errors["username"] = "That username is already taken."
         if not full_name:
             errors["full_name"] = "Full name is required."
-        if len(password) < 6:
-            errors["password"] = "Password must be at least 6 characters."
+        email = (data.get("email") or "").strip()
+        if email and User.objects.filter(email__iexact=email).exists():
+            errors["email"] = "That email address is already registered."
+        try:
+            validate_password(password)
+        except DjangoValidationError as exc:
+            errors["password"] = " ".join(part for part in exc.messages if isinstance(part, str))
         if errors:
             return Response(errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -80,7 +87,7 @@ class SupervisorListCreateView(APIView):
                 username=username,
                 role=User.ROLE_SUPERVISOR,
                 full_name=full_name,
-                email=(data.get("email") or "").strip(),
+                email=email,
                 phone=(data.get("phone") or "").strip(),
             )
             user.set_password(password)

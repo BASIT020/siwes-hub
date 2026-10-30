@@ -140,6 +140,12 @@ class DailyLogDetailView(APIView):
         serializer = DailyLogSerializer(entry, data=payload, partial=True)
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
+        audit(
+            request.user,
+            "LOG EDITED",
+            f"Student '{request.user.username}' edited daily log #{entry.id} "
+            f"({entry.log_date}) while status was '{entry.get_status_display().lower()}'.",
+        )
         return Response(DailyLogSerializer(instance).data)
 
     def delete(self, request, pk):
@@ -150,7 +156,14 @@ class DailyLogDetailView(APIView):
             return Response({"detail": "Only the owner can delete this log."}, status=status.HTTP_403_FORBIDDEN)
         if not entry.is_editable:
             return Response({"detail": "Only drafts can be deleted."}, status=status.HTTP_400_BAD_REQUEST)
+        log_id = entry.id
+        log_date = entry.log_date
         entry.delete()
+        audit(
+            request.user,
+            "LOG DELETED",
+            f"Student '{request.user.username}' deleted daily log #{log_id} ({log_date}).",
+        )
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 

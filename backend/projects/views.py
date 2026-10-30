@@ -73,6 +73,11 @@ class MyProjectView(APIView):
         serializer = StudentProjectSerializer(project, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
+        audit(
+            request.user,
+            "PROJECT UPDATED",
+            f"Student '{request.user.username}' updated project '{instance.title}'.",
+        )
         return Response(StudentProjectSerializer(instance).data)
 
 

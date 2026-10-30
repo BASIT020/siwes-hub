@@ -115,6 +115,12 @@ class WeeklyReportDetailView(APIView):
         serializer = WeeklyReportSerializer(report, data=payload, partial=True)
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
+        audit(
+            request.user,
+            "REPORT EDITED",
+            f"Student '{request.user.username}' edited weekly report #{report.id} "
+            f"(week starting {report.week_start}).",
+        )
         return Response(WeeklyReportSerializer(instance).data)
 
     def delete(self, request, pk):
@@ -125,7 +131,14 @@ class WeeklyReportDetailView(APIView):
             return Response({"detail": "Only the owner can delete this report."}, status=status.HTTP_403_FORBIDDEN)
         if not report.is_editable:
             return Response({"detail": "Only drafts can be deleted."}, status=status.HTTP_400_BAD_REQUEST)
+        report_id = report.id
+        report_week = report.week_start
         report.delete()
+        audit(
+            request.user,
+            "REPORT DELETED",
+            f"Student '{request.user.username}' deleted weekly report #{report_id} (week starting {report_week}).",
+        )
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 

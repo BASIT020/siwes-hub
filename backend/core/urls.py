@@ -11,5 +11,6 @@ router.register("placements", core_views.PlacementViewSet, basename="placement")
 
 urlpatterns = [
     path("dashboard/", views.DashboardView.as_view(), name="dashboard"),
+    path("audit/", views.AuditLogListView.as_view(), name="audit-logs"),
     path("", include(router.urls)),
 ]

@@ -88,8 +88,10 @@ if errorlevel 1 (
 )
 
 rem    Start the server in its own minimized window; log to a file the user
-rem    can inspect later.
+rem    can inspect later. SIWES_DEBUG=1 (set above) keeps the local development
+rem    niceties on; production defaults to DEBUG off unless explicitly enabled.
 echo            Starting server on http://127.0.0.1:8000 ...
+set "SIWES_DEBUG=1"
 start "SIWES Hub Server" /min cmd /c ""%PY_EXE%" manage.py runserver 127.0.0.1:8000 --noreload > "%PROJECT_ROOT%\database\server.log" 2>&1"
 popd
 

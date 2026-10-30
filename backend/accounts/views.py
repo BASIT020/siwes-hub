@@ -12,7 +12,11 @@ from collections import defaultdict
 from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.hashers import check_password
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_protect
 from rest_framework import generics, permissions, serializers, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -32,6 +36,10 @@ from .serializers import (
 )
 
 # In-memory failed login tracker (single-process demonstration app).
+# Failures are keyed both by the submitted username and by the client IP, so
+# password spraying with username case/whitespace variants (or rotating
+# usernames from one address) still hits the throttle. IP entries expire with
+# the same window; nothing is persisted across server restarts.
 _failed_logins = defaultdict(list)
 
 
@@ -44,8 +52,19 @@ def _recent_failures(username: str) -> int:
     return len(entries)
 
 
-def _record_failure(username: str) -> None:
-    _failed_logins[username.lower()].append(time.monotonic())
+def _recent_ip_failures(ip: str) -> int:
+    """Count how many failed logins came from this client IP in the window."""
+    now = time.monotonic()
+    window = settings.LOGIN_ATTEMPT_WINDOW_SECONDS
+    entries = [t for t in _failed_logins.get(f"ip:{ip}", []) if now - t < window]
+    _failed_logins[f"ip:{ip}"] = entries
+    return len(entries)
+
+
+def _record_failure(username: str, ip: str) -> None:
+    now = time.monotonic()
+    _failed_logins[username.lower()].append(now)
+    _failed_logins[f"ip:{ip}"].append(now)
 
 
 def _clear_failures(username: str) -> None:
@@ -67,14 +86,16 @@ class LoginView(APIView):
 
     permission_classes = [permissions.AllowAny]
 
+    @method_decorator(csrf_protect)
     def post(self, request):
-        if _recent_failures(request.data.get("username", "")) >= settings.LOGIN_MAX_ATTEMPTS:
+        username = (request.data.get("username") or "").strip()
+        ip = request.META.get("REMOTE_ADDR", "") or "unknown"
+        if max(_recent_failures(username), _recent_ip_failures(ip)) >= settings.LOGIN_MAX_ATTEMPTS:
             return Response(
                 {"detail": "Too many failed attempts. Wait ten minutes and try again."},
                 status=status.HTTP_429_TOO_MANY_REQUESTS,
             )
 
-        username = (request.data.get("username") or "").strip()
         password = request.data.get("password") or ""
         if not username or not password:
             return Response(
@@ -121,7 +142,7 @@ class LoginView(APIView):
                 )
             # Always return the same generic message so attackers cannot learn
             # whether a username exists.
-            _record_failure(username)
+            _record_failure(username, ip)
             return Response(
                 {"detail": "Invalid username or password."},
                 status=status.HTTP_401_UNAUTHORIZED,
@@ -142,7 +163,11 @@ class LogoutView(APIView):
     """POST -> end the session."""
 
     def post(self, request):
+        user = request.user
         logout(request)
+        # Audit after logout: the session is gone, the actor is the user that
+        # was just signed out (kept in a local variable above).
+        audit(user, "LOGOUT", f"User '{user.username}' signed out.")
         return Response({"detail": "Logged out."})
 
 
@@ -199,6 +224,7 @@ class RegisterStudentView(APIView):
 
     permission_classes = [permissions.AllowAny]
 
+    @method_decorator(csrf_protect)
     def post(self, request):
         if _too_many_registrations(request):
             return Response(
@@ -225,6 +251,7 @@ class RegisterSupervisorView(APIView):
 
     permission_classes = [permissions.AllowAny]
 
+    @method_decorator(csrf_protect)
     def post(self, request):
         if _too_many_registrations(request):
             return Response(
@@ -288,11 +315,10 @@ class IsAdministrator(permissions.BasePermission):
 
 
 class UserListCreateView(generics.ListCreateAPIView):
-    """GET (list/search users) and POST (create account) - administrators."""
+    """GET (list/search/filter users) and POST (create account) - administrators."""
 
     serializer_class = UserSummarySerializer
     permission_classes = [IsAdministrator]
-    filterset_fields = ["role", "is_active"]
 
     def get_queryset(self):
         queryset = User.objects.all()
@@ -305,6 +331,15 @@ class UserListCreateView(generics.ListCreateAPIView):
                 | Q(full_name__icontains=search)
                 | Q(email__icontains=search)
             )
+        # Explicit role / is_active filters (the declared filterset_fields were
+        # a silent no-op without a filter backend - filtering is hand-rolled
+        # here instead of adding a dependency).
+        role = self.request.query_params.get("role")
+        if role in dict(User.ROLES):
+            queryset = queryset.filter(role=role)
+        is_active = self.request.query_params.get("is_active")
+        if is_active in ("true", "false"):
+            queryset = queryset.filter(is_active=(is_active == "true"))
         return queryset
 
     def create(self, request, *args, **kwargs):
@@ -313,21 +348,26 @@ class UserListCreateView(generics.ListCreateAPIView):
         username = (data.get("username") or "").strip()
         role = data.get("role") or ""
         password = data.get("password") or ""
+        email = (data.get("email") or "").strip()
         if not username:
             errors["username"] = "Username is required."
         elif User.objects.filter(username__iexact=username).exists():
             errors["username"] = "That username is already taken."
         if role not in dict(User.ROLES):
             errors["role"] = "Role must be student, supervisor or admin."
-        if len(password) < 6:
-            errors["password"] = "Password must be at least 6 characters."
+        if email and User.objects.filter(email__iexact=email).exists():
+            errors["email"] = "That email address is already registered."
+        try:
+            validate_password(password)
+        except DjangoValidationError as exc:
+            errors["password"] = " ".join(part for part in exc.messages if isinstance(part, str))
         if errors:
             return Response(errors, status=status.HTTP_400_BAD_REQUEST)
 
         with transaction.atomic():
             user = User(username=username, role=role)
             user.full_name = (data.get("full_name") or "").strip()
-            user.email = (data.get("email") or "").strip()
+            user.email = email
             user.phone = (data.get("phone") or "").strip()
             user.is_active = True if data.get("is_active") is None else bool(data.get("is_active"))
             user.set_password(password)

@@ -439,6 +439,10 @@ class AuditLogListView(APIView):
     """GET /api/core/audit/ - administrators only."""
 
     def get_permissions(self):
+        # Imported lazily to avoid a circular import (accounts.views imports
+        # from core at module level).
+        from accounts.views import IsAdministrator
+
         return [IsAdministrator()]
 
     def get(self, request):

@@ -132,4 +132,4 @@ class SkillSerializer(serializers.ModelSerializer):
             "related_activity",
             "created_at",
         ]
-        read_only_fields = ["created_at"]
+        read_only_fields = ["student", "created_at"]

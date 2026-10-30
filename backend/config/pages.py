@@ -45,4 +45,8 @@ def page(request, path):
 def _serve_page(request, file_name):
     from django.conf import settings
 
-    return serve(request, file_name, document_root=str(settings.FRONTEND_ROOT / "pages"))
+    response = serve(request, file_name, document_root=str(settings.FRONTEND_ROOT / "pages"))
+    # Always revalidate so users never run stale HTML (with old JS wiring)
+    # against a freshly deployed backend - same policy as /css/ and /js/.
+    response["Cache-Control"] = "no-cache"
+    return response

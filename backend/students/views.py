@@ -8,6 +8,8 @@ Authorization summary:
 * Student creation          -> administrators create user + profile in one call
 """
 from django.contrib.auth import get_user_model
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from rest_framework import generics, permissions, status
 from rest_framework.permissions import IsAuthenticated
@@ -88,8 +90,13 @@ class StudentListCreateView(APIView):
             errors["matric_number"] = "Matriculation number must be unique."
         if not full_name:
             errors["full_name"] = "Full name is required."
-        if len(password) < 6:
-            errors["password"] = "Password must be at least 6 characters."
+        email = (data.get("email") or "").strip()
+        if email and User.objects.filter(email__iexact=email).exists():
+            errors["email"] = "That email address is already registered."
+        try:
+            validate_password(password)
+        except DjangoValidationError as exc:
+            errors["password"] = " ".join(part for part in exc.messages if isinstance(part, str))
         if errors:
             return Response(errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -98,7 +105,7 @@ class StudentListCreateView(APIView):
                 username=username,
                 role=User.ROLE_STUDENT,
                 full_name=full_name,
-                email=(data.get("email") or "").strip(),
+                email=email,
                 phone=(data.get("phone") or "").strip(),
             )
             user.set_password(password)
@@ -203,10 +210,17 @@ class MyStudentProfileView(APIView):
 # Skills
 # --------------------------------------------------------------------------- #
 class IsOwnStudent(permissions.BasePermission):
-    """Object-level: a student may only touch their own records."""
+    """Object-level: a student may only *write* their own records.
+
+    Read access for supervisors/administrators is granted here: the view's
+    role-scoped get_queryset has already filtered the object into the
+    requester's visible set (students own, supervisors assigned, admins all).
+    """
 
     def has_object_permission(self, request, view, obj):
         student = getattr(obj, "student", None)
+        if request.method in permissions.SAFE_METHODS:
+            return request.user.is_authenticated
         return (
             request.user.is_authenticated
             and request.user.is_student_role
@@ -246,6 +260,7 @@ class SkillListCreateView(APIView):
             return Response({"name": "You already recorded this skill."}, status=status.HTTP_400_BAD_REQUEST)
 
         skill = serializer.save(student=request.user.student_profile)
+        audit(request.user, "SKILL ADDED", f"Student '{request.user.username}' recorded skill '{skill.name}'.")
         return Response(SkillSerializer(skill).data, status=status.HTTP_201_CREATED)
 
 
@@ -255,5 +270,35 @@ class SkillDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated, IsOwnStudent]
 
     def get_queryset(self):
-        # Students only ever reach their own skill rows through this view.
-        return Skill.objects.filter(student=self.request.user.student_profile)
+        """Role-scoped visibility, mirroring SkillListCreateView:
+        students see their own rows, supervisors their assigned students',
+        administrators everything. Anything outside the scope is a plain 404
+        instead of the previous crash for non-student roles."""
+        user = self.request.user
+        if user.is_student_role:
+            return Skill.objects.filter(student=user.student_profile)
+        if user.is_supervisor_role:
+            from core.utils import get_supervisor_students
+
+            return Skill.objects.filter(
+                student__in=get_supervisor_students(user.supervisor_profile)
+            )
+        if user.is_admin_role:
+            return Skill.objects.all()
+        return Skill.objects.none()
+
+    def perform_update(self, serializer):
+        skill = serializer.save()
+        audit(
+            self.request.user,
+            "SKILL UPDATED",
+            f"Student '{self.request.user.username}' updated skill '{skill.name}'.",
+        )
+
+    def perform_destroy(self, instance):
+        audit(
+            self.request.user,
+            "SKILL DELETED",
+            f"Student '{self.request.user.username}' deleted skill '{instance.name}'.",
+        )
+        instance.delete()

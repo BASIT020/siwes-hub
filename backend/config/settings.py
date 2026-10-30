@@ -49,9 +49,10 @@ def _load_secret_key() -> str:
 SECRET_KEY = _load_secret_key() if not os.environ.get("SIWES_SECRET_KEY") else os.environ["SIWES_SECRET_KEY"]  # noqa: E501
 
 # SECURITY WARNING: don't run with debug turned on in production!
-# The local launchers keep DEBUG on; production deployments set SIWES_DEBUG=0
-# in the PythonAnywhere web app environment variables.
-DEBUG = os.environ.get("SIWES_DEBUG", "1") not in ("0", "false", "False")
+# Fail-closed: production deployments set SIWES_DEBUG=0 (or leave it unset);
+# the local launcher (START_APP.bat) sets SIWES_DEBUG=1 explicitly for the
+# development niceties (traceback pages etc.).
+DEBUG = os.environ.get("SIWES_DEBUG", "0").strip().lower() not in ("0", "false", "off", "no")
 
 
 def _env_list(name: str) -> list:

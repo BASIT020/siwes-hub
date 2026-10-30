@@ -27,7 +27,9 @@ class AttendanceSerializer(serializers.ModelSerializer):
             "verified_at",
             "created_at",
         ]
-        read_only_fields = ["recorded_by", "verified_by", "verified_at"]
+        # student/date are fixed at creation: PATCH may correct status/note but
+        # never re-point (or backdate) a record onto another student/day.
+        read_only_fields = ["student", "date", "recorded_by", "verified_by", "verified_at"]
 
     def get_verified_by_name(self, obj):
         return str(obj.verified_by) if obj.verified_by else None
