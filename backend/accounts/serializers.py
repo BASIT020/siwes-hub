@@ -62,6 +62,54 @@ class PasswordResetSerializer(serializers.Serializer):
 # Public self-registration (students and supervisors only; the role is fixed
 # server-side in each serializer, never taken from the payload).
 # --------------------------------------------------------------------------- #
+class ProfileUpdateSerializer(serializers.Serializer):
+    """Self-service edit of the signed-in account's identity details
+    (username, full name, email). Uniqueness is enforced case-insensitively,
+    excluding the user's own current values. The password is NOT editable
+    here - it has its own endpoint (/api/auth/change-password/) so a stolen
+    session cannot take over the account silently."""
+
+    username = serializers.CharField(max_length=150, trim_whitespace=True)
+    full_name = serializers.CharField(max_length=150, trim_whitespace=True)
+    email = serializers.EmailField(trim_whitespace=True, required=False, allow_blank=True)
+
+    def validate_username(self, value):
+        username = value.strip()
+        if not username:
+            raise serializers.ValidationError("Username is required.")
+        if len(username) < 3:
+            raise serializers.ValidationError("Username must be at least 3 characters.")
+        taken = User.objects.filter(username__iexact=username)
+        if self.instance is not None:
+            taken = taken.exclude(pk=self.instance.pk)
+        if taken.exists():
+            raise serializers.ValidationError("That username is already taken. Choose another.")
+        return username
+
+    def validate_full_name(self, value):
+        if not value.strip():
+            raise serializers.ValidationError("Full name is required.")
+        return value.strip()
+
+    def validate_email(self, value):
+        email = value.strip().lower()
+        taken = User.objects.filter(email__iexact=email)
+        if self.instance is not None:
+            taken = taken.exclude(pk=self.instance.pk)
+        if email and taken.exists():
+            raise serializers.ValidationError(
+                "That email address is already registered on another account."
+            )
+        return email
+
+    def update(self, instance, validated_data):
+        for field in ("username", "full_name", "email"):
+            if field in validated_data:
+                setattr(instance, field, validated_data[field])
+        instance.save(update_fields=["username", "full_name", "email"])
+        return instance
+
+
 class RegistrationSerializer(serializers.Serializer):
     """Shared behaviour for both registration forms."""
 

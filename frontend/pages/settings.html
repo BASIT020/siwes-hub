@@ -25,6 +25,34 @@
         </div>
 
         <div class="grid-2">
+          <!-- Profile details (self-service edit) -->
+          <div class="card">
+            <div class="card-title"><i data-lucide="pencil"></i>Profile details</div>
+            <form id="profileForm" class="form-grid" novalidate>
+              <div class="full form-error" id="profileError" style="display:none">
+                <i data-lucide="alert-circle"></i><span></span>
+              </div>
+              <div class="field full">
+                <label for="profileFullName">Full name</label>
+                <input type="text" id="profileFullName" name="full_name" maxlength="150" required>
+              </div>
+              <div class="field full">
+                <label for="profileUsername">Username</label>
+                <input type="text" id="profileUsername" name="username" maxlength="150" required>
+                <p class="hint">You sign in with this username. It must be unique.</p>
+              </div>
+              <div class="field full">
+                <label for="profileEmail">Email address</label>
+                <input type="email" id="profileEmail" name="email" required>
+              </div>
+              <div class="full modal-actions" style="justify-content:flex-start; margin-top:0.4rem">
+                <button type="submit" class="btn btn-primary"><i data-lucide="save"></i>Save profile</button>
+              </div>
+            </form>
+            <hr style="border-color:var(--border); margin:0.6rem 0">
+            <p class="hint mb-0">Changing your password is done in the <em>Change password</em> form below.</p>
+          </div>
+
           <!-- Account summary (live from the server) -->
           <div class="card">
             <div class="card-title"><i data-lucide="user-round"></i>Account summary</div>

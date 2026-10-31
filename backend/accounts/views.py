@@ -30,6 +30,7 @@ from .models import User
 from .serializers import (
     AuthUserSerializer,
     PasswordResetSerializer,
+    ProfileUpdateSerializer,
     StudentRegistrationSerializer,
     SupervisorRegistrationSerializer,
     UserSummarySerializer,
@@ -186,10 +187,24 @@ class LogoutView(APIView):
 
 
 class MeView(APIView):
-    """GET -> current user + role, used to pick the dashboard to open."""
+    """GET -> current user + role, used to pick the dashboard to open.
+    PATCH -> self-service editing of username / full name / email."""
 
     def get(self, request):
         return Response(AuthUserSerializer(request.user).data)
+
+    def patch(self, request):
+        serializer = ProfileUpdateSerializer(request.user, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        previous_username = request.user.username
+        user = serializer.save()
+        audit(
+            request.user,
+            "PROFILE UPDATED",
+            f"User '{previous_username}' updated their profile "
+            f"(username '{user.username}', email '{user.email or '-'}').",
+        )
+        return Response(AuthUserSerializer(user).data)
 
 
 # --------------------------------------------------------------------------- #
