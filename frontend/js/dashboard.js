@@ -85,8 +85,68 @@ async function loadStudentDashboard() {
           <a class="btn btn-ghost" href="/pages/announcements.html"><i data-lucide="megaphone"></i>Announcements</a>
         </div>
       </div>
-    </div>`;
+    </div>
+    ${!placement || !placement.supervisor ? `
+    <div class="card mt-2" id="supervisorPickerCard">
+      <div class="card-title"><i data-lucide="user-check"></i>Choose your supervisor</div>
+      <p class="muted small mt-0">If your supervisor was assigned to you outside SIWES Hub, pick them here. Your logs,
+      reports and project will be routed to them for review, and the SIWES office is notified.</p>
+      <div class="flex" style="gap:.6rem; flex-wrap:wrap">
+        <select id="supervisorPick" style="min-width:260px; flex:1 1 260px">
+          <option value="">Loading approved supervisors...</option>
+        </select>
+        <button class="btn btn-primary" id="supervisorPickBtn"><i data-lucide="link"></i>Link supervisor</button>
+      </div>
+      <p class="hint mb-0">Only supervisors approved by the SIWES office are listed. Wrong pick?
+      Ask the office to change your placement.</p>
+    </div>` : ""}`;
   refreshIcons();
+
+  const pickSelect = document.getElementById("supervisorPick");
+  if (pickSelect) {
+    const optionsResponse = await api.get("/core/placements/supervisor-options/", { showErrors: false });
+    if (optionsResponse.ok && Array.isArray(optionsResponse.data)) {
+      if (optionsResponse.data.length) {
+        pickSelect.innerHTML =
+          '<option value="">-- select your supervisor --</option>'
+          + optionsResponse.data.map((o) => {
+            const label = (o.currently_assigned ? o.full_name + " (currently assigned)" : o.full_name)
+              + (o.title ? `, ${o.title}` : "")
+              + (o.department ? ` (${o.department})` : "");
+            return `<option value="${o.id}">${escapeHtml(label)}</option>`;
+          }).join("");
+      } else {
+        pickSelect.innerHTML = '<option value="">No approved supervisors available yet</option>';
+        const btn = document.getElementById("supervisorPickBtn");
+        if (btn) btn.disabled = true;
+      }
+    } else {
+      pickSelect.innerHTML = '<option value="">Could not load supervisors - refresh the page</option>';
+    }
+
+    const pickBtn = document.getElementById("supervisorPickBtn");
+    if (pickBtn) {
+      pickBtn.addEventListener("click", async () => {
+        const pick = pickSelect.value;
+        const chosen = (optionsResponse.ok && optionsResponse.data || []).find((o) => String(o.id) === String(pick));
+        if (!pick || !chosen) return toast("Select your supervisor first.", "error");
+        if (await confirmDialog(
+          `Link ${chosen.full_name} as your supervisor?\n\nThey will see your logs, reports and project for review,`
+          + ` and the SIWES office is notified.`,
+          { okLabel: "Link supervisor" },
+        )) {
+          const response = await api.post("/core/placements/select-supervisor/", { supervisor: Number(pick) }, { showErrors: false });
+          if (response.ok) {
+            toast("Your supervisor has been recorded.", "success");
+            setTimeout(() => loadStudentDashboard(), 700);
+          } else {
+            const errors = response.data || {};
+            toast(errors.detail || (errors.supervisor && errors.supervisor.join(". ")) || "Could not link the supervisor.", "error");
+          }
+        }
+      });
+    }
+  }
 }
 
 async function loadSupervisorDashboard() {

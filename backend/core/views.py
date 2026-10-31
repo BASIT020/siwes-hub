@@ -9,6 +9,7 @@ Views for the core application:
 from django.db.models import Avg, Count, Q
 from django.utils import timezone
 from rest_framework import permissions, status, serializers
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -492,6 +493,147 @@ class PlacementViewSet(ModelViewSet):
             f"Deactivated placement #{instance.id} of student '{instance.student}'.",
         )
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=False, methods=["get"], url_path="supervisor-options",
+            permission_classes=[IsAuthenticated])
+    def supervisor_options(self, request):
+        """GET /api/core/placements/supervisor-options/ - students only.
+
+        Slim directory of *approved* supervisors so a student who was assigned
+        a supervisor outside SIWES Hub can identify them. Only names, job
+        titles and departments are exposed (no contact or approval data)."""
+        if not request.user.is_student_role:
+            return Response({"detail": "Not allowed."}, status=status.HTTP_403_FORBIDDEN)
+        approved = (
+            SupervisorProfile.objects
+            .filter(is_active=True, is_pending=False, rejected_at__isnull=True)
+            .select_related("user")
+            .order_by("user__full_name")
+        )
+        options = [
+            {
+                "id": s.pk,
+                "full_name": s.user.full_name or s.user.username,
+                "title": s.title,
+                "department": s.department,
+            }
+            for s in approved
+        ]
+        # If the student somehow already has a supervisor recorded, make sure
+        # they can still see it labelled rather than silently re-picking.
+        placement = getattr(getattr(request.user, "student_profile", None), "placement", None)
+        if placement is not None and placement.supervisor_id:
+            current = placement.supervisor
+            current_id = current.pk
+            options = [
+                o for o in options if o["id"] != current_id
+            ]
+            options.insert(0, {
+                "id": current_id,
+                "full_name": current.user.full_name or current.user.username,
+                "title": current.title,
+                "department": current.department,
+                "currently_assigned": True,
+            })
+        return Response(options)
+
+    @action(detail=False, methods=["post"], url_path="select-supervisor",
+            permission_classes=[IsAuthenticated])
+    def select_supervisor(self, request):
+        """POST /api/core/placements/select-supervisor/ - students only.
+
+        For students whose supervisor was assigned *outside* SIWES Hub: they
+        record that supervisor themselves. The pick takes effect immediately
+        but is limited to approved supervisors, audited, and notified - the
+        SIWES office can still edit the placement on the Students page."""
+        if not request.user.is_student_role:
+            return Response(
+                {"detail": "Only students can select their own supervisor."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        supervisor_id = request.data.get("supervisor")
+        if not supervisor_id:
+            return Response(
+                {"supervisor": "Select the supervisor who was assigned to you."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        supervisor = SupervisorProfile.objects.select_related("user").filter(pk=supervisor_id).first()
+        if supervisor is None:
+            return Response({"supervisor": "Supervisor not found."}, status=status.HTTP_400_BAD_REQUEST)
+        if supervisor.is_pending or not supervisor.is_active or supervisor.rejected_at:
+            return Response(
+                {"supervisor": "Only approved supervisors can be selected."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        try:
+            student = request.user.student_profile
+        except StudentProfile.DoesNotExist:
+            return Response({"detail": "Student profile not found."}, status=status.HTTP_404_NOT_FOUND)
+        placement = getattr(student, "placement", None)
+        if placement is not None and not placement.is_active:
+            return Response(
+                {"detail": "Your previous placement is closed. Ask the SIWES office to reactivate it."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if placement is not None and placement.supervisor_id:
+            if placement.supervisor_id == supervisor.pk:
+                return Response(
+                    {"detail": "You are already assigned to this supervisor."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            return Response(
+                {"detail": "You are already assigned to a supervisor. "
+                           "Contact the SIWES office if it needs to change."},
+                status=status.HTTP_409_CONFLICT,
+            )
+        created = placement is None
+        if created:
+            placement = Placement(student=student, supervisor=supervisor, is_active=True)
+            placement.save()
+            audit(
+                request.user,
+                "PLACEMENT SELF-ASSIGNED",
+                f"'{student}' recorded supervisor '{supervisor}' "
+                f"(supervisor assigned outside SIWES Hub).",
+            )
+        else:
+            placement.supervisor = supervisor
+            placement.save(update_fields=["supervisor"])
+            audit(
+                request.user,
+                "SUPERVISOR SELF-ASSIGNED",
+                f"'{student}' selected supervisor '{supervisor}' for placement #{placement.id}.",
+            )
+        from notifications.utils import notify
+        from django.contrib.auth import get_user_model
+
+        notify(
+            supervisor.user,
+            "placement",
+            "New student assigned",
+            f"'{student}' selected you as their SIWES supervisor.",
+            target_url="/pages/supervisor-dashboard.html",
+        )
+        notify(
+            request.user,
+            "placement",
+            "Supervisor recorded",
+            "'%s' is now recorded as your supervisor. The SIWES office can still "
+            "update your placement if needed." % supervisor,
+            target_url="/pages/student-dashboard.html",
+        )
+        for admin_user in get_user_model().objects.filter(role="admin", is_active=True):
+            notify(
+                admin_user,
+                "placement",
+                "Student picked a supervisor",
+                f"'{student}' selected '{supervisor}' as their supervisor. Review it on the Students page.",
+                target_url="/pages/students.html",
+            )
+        return Response(
+            PlacementSerializer(placement).data,
+            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
+        )
 
 
 class AuditLogListView(APIView):
