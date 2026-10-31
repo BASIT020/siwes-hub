@@ -363,13 +363,26 @@ class PlacementViewSet(ModelViewSet):
         return queryset
 
     @staticmethod
-    def _validate_ids(data):
-        """Make sure administrator-supplied ids actually exist (idempotent errors)."""
+    def _validate_ids(data, exempt_supervisor_id=None):
+        """Make sure administrator-supplied ids actually exist (idempotent errors).
+
+        Supervisors must be *approved* before they can be assigned to a
+        student: pending or rejected registrations (and deactivated
+        supervisors) are refused. `exempt_supervisor_id` keeps an existing
+        placement working when its currently assigned supervisor is later
+        deactivated - editing other fields must not force a re-assignment."""
         errors = {}
         if data.get("organization") and not Organization.objects.filter(pk=data["organization"]).exists():
             errors["organization"] = "Organization not found."
-        if data.get("supervisor") and not SupervisorProfile.objects.filter(pk=data["supervisor"]).exists():
-            errors["supervisor"] = "Supervisor not found."
+        if data.get("supervisor"):
+            supervisor = SupervisorProfile.objects.filter(pk=data["supervisor"]).first()
+            if supervisor is None:
+                errors["supervisor"] = "Supervisor not found."
+            elif (
+                int(data["supervisor"]) != exempt_supervisor_id
+                and (supervisor.is_pending or not supervisor.is_active or supervisor.rejected_at)
+            ):
+                errors["supervisor"] = "Only approved supervisors can be assigned to students."
         if data.get("siwes_session") and not SIWESSession.objects.filter(pk=data["siwes_session"]).exists():
             errors["siwes_session"] = "SIWES session not found."
         return errors
@@ -401,13 +414,38 @@ class PlacementViewSet(ModelViewSet):
             "PLACEMENT ASSIGNED",
             f"Assigned '{student}' to '{placement.organization.name if placement.organization else 'no organization'}'.",
         )
+        # Tell the student and the supervisor about the new assignment using
+        # the existing notification system.
+        from notifications.utils import notify
+
+        notify(
+            student.user,
+            "placement",
+            "Placement assigned",
+            "Your industrial training placement has been recorded. See your dashboard for details.",
+            target_url="/pages/student-dashboard.html",
+        )
+        if placement.supervisor is not None:
+            notify(
+                placement.supervisor.user,
+                "placement",
+                "New student assigned",
+                f"'{student}' was assigned to you for review.",
+                target_url="/pages/supervisor-dashboard.html",
+            )
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
-        errors = self._validate_ids(request.data)
+        errors = self._validate_ids(
+            request.data,
+            exempt_supervisor_id=instance.supervisor_id
+            if str(instance.supervisor_id or "") == str(request.data.get("supervisor") or "")
+            else None,
+        )
         if errors:
             return Response(errors, status=status.HTTP_400_BAD_REQUEST)
+        previous_supervisor_id = instance.supervisor_id
         serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         placement = serializer.save()
@@ -416,6 +454,27 @@ class PlacementViewSet(ModelViewSet):
             "PLACEMENT UPDATED",
             f"Updated placement #{placement.id} of student '{placement.student}'.",
         )
+        # If the supervisor changed under an active placement, tell the new
+        # supervisor (and the student) using the existing notification system.
+        if placement.is_active and placement.supervisor_id != previous_supervisor_id:
+            from notifications.utils import notify
+
+            if placement.supervisor is not None:
+                notify(
+                    placement.supervisor.user,
+                    "placement",
+                    "New student assigned",
+                    f"'{placement.student}' was assigned to you for review.",
+                    target_url="/pages/supervisor-dashboard.html",
+                )
+            notify(
+                placement.student.user,
+                "placement",
+                "Placement updated",
+                f"Your supervisor is now '{placement.supervisor}'." if placement.supervisor
+                else "Your placement was updated.",
+                target_url="/pages/student-dashboard.html",
+            )
         return Response(serializer.data)
 
     def destroy(self, request, *args, **kwargs):

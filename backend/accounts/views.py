@@ -136,6 +136,20 @@ class LoginView(APIView):
                         },
                         status=status.HTTP_403_FORBIDDEN,
                     )
+                if (
+                    existing.role == User.ROLE_SUPERVISOR
+                    and getattr(existing, "supervisor_profile", None) is not None
+                    and existing.supervisor_profile.rejected_at is not None
+                ):
+                    return Response(
+                        {
+                            "detail": (
+                                "Your supervisor registration was not approved. Please "
+                                "contact the SIWES office if you believe this is a mistake."
+                            )
+                        },
+                        status=status.HTTP_403_FORBIDDEN,
+                    )
                 return Response(
                     {"detail": "This account has been deactivated. Contact the administrator."},
                     status=status.HTTP_403_FORBIDDEN,

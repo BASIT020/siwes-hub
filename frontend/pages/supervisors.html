@@ -34,6 +34,13 @@
 
         <div class="filter-row">
           <input type="search" id="supervisorsSearch" class="grow" placeholder="Search by name or department...">
+          <select id="supervisorsStatus" aria-label="Filter by account status">
+            <option value="">All statuses</option>
+            <option value="pending">Pending approval</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+            <option value="inactive">Deactivated</option>
+          </select>
         </div>
 
         <div id="supervisorsList"></div>

@@ -20,6 +20,26 @@ class SupervisorProfile(models.Model):
     # account is still awaiting administrator approval; cleared once approved
     # (or once the request is rejected/deactivated by the SIWES office).
     is_pending = models.BooleanField("Awaiting approval", default=False)
+    # Administrator decisions (kept so the trail is queryable, not only in the
+    # audit log): approve/reject actions stamp these; re-approval wipes the
+    # rejection fields again.
+    approved_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="supervisors_approved",
+    )
+    approved_at = models.DateTimeField(null=True, blank=True)
+    rejected_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="supervisors_rejected",
+    )
+    rejected_at = models.DateTimeField(null=True, blank=True)
+    rejected_reason = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -28,3 +48,15 @@ class SupervisorProfile(models.Model):
     def __str__(self) -> str:
         name = self.user.full_name or self.user.username
         return f"{name}".strip()
+
+    @property
+    def status(self) -> str:
+        """Application status for the approval queue: pending -> approved
+        (or rejected), then optionally deactivated later by the office."""
+        if self.is_pending:
+            return "pending"
+        if self.is_active:
+            return "approved"
+        if self.rejected_at:
+            return "rejected"
+        return "inactive"

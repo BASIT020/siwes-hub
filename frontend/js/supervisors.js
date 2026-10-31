@@ -1,22 +1,24 @@
-/* ==========================================================================
+﻿/* ==========================================================================
    SIWES Hub - supervisors.js
    Supervisors page (administrator only):
      register, edit and deactivate institution supervisors - the same way
      students are managed. Students see their own supervisor via the profile.
    ========================================================================== */
 
-let supervisorsState = { page: 1 };
+let supervisorsState = { page: 1, status: "" };
 
 /** A supervisor whose self-registered account still waits for approval. */
 function supervisorNeedsApproval(supervisor) {
   return Boolean(supervisor.is_pending) || Boolean(supervisor.user_is_active === false && supervisor.is_active);
 }
 
-/** Status badge that tells "pending approval" apart from plain "inactive". */
+/** Status badge from the server-computed application status (falls back to
+ * the legacy is_pending/is_active flags for older cached responses). */
 function supervisorStatusBadge(supervisor) {
-  if (supervisorNeedsApproval(supervisor)) {
+  if (supervisor.status === "pending" || supervisorNeedsApproval(supervisor)) {
     return '<span class="badge badge-pending">pending approval</span>';
   }
+  if (supervisor.status === "rejected") return statusBadge("rejected");
   return statusBadge(supervisor.is_active ? "active" : "inactive");
 }
 
@@ -31,6 +33,14 @@ async function initSupervisorsPage() {
     clearTimeout(supervisorsState._searchTimer);
     supervisorsState._searchTimer = setTimeout(() => { supervisorsState.page = 1; renderSupervisors(); }, 250);
   });
+  const statusFilter = document.getElementById("supervisorsStatus");
+  if (statusFilter) {
+    statusFilter.addEventListener("change", () => {
+      supervisorsState.status = statusFilter.value;
+      supervisorsState.page = 1;
+      renderSupervisors();
+    });
+  }
 
   renderSupervisors();
 }
@@ -44,6 +54,7 @@ async function renderSupervisors() {
   params.set("page_size", 12);
   const search = document.getElementById("supervisorsSearch").value;
   if (search) params.set("search", search);
+  if (supervisorsState.status) params.set("status", supervisorsState.status);
 
   const response = await api.getPaged(`/supervisors/?${params.toString()}`);
   renderPager(document.getElementById("supervisorsPager"), response, (newPage) => {
@@ -59,7 +70,7 @@ async function renderSupervisors() {
   listRoot.innerHTML = `
     <div class="table-wrap">
       <table class="data-table">
-        <thead><tr><th>Supervisor</th><th>Staff ID</th><th>Department</th><th>Email</th><th>Assigned students</th><th>Status</th><th></th></tr></thead>
+        <thead><tr><th>Supervisor</th><th>Staff ID</th><th>Department</th><th>Email</th><th>Assigned students</th><th>Registered</th><th>Status</th><th></th></tr></thead>
         <tbody>
           ${response.results.map((supervisor) => `
             <tr>
@@ -68,15 +79,17 @@ async function renderSupervisors() {
               <td>${escapeHtml(supervisor.department || "-")}</td>
               <td class="muted small">${escapeHtml(supervisor.email || "-")}</td>
               <td>${supervisor.assigned_students}</td>
+              <td class="muted small">${formatDate(supervisor.created_at)}</td>
               <td>${supervisorStatusBadge(supervisor)}</td>
               <td class="flex flex-wrap">
+                <button class="btn btn-outline btn-sm" data-view="${supervisor.id}"><i data-lucide="eye"></i>Details</button>
                 <button class="btn btn-outline btn-sm" data-edit="${supervisor.id}"><i data-lucide="pencil"></i>Edit</button>
-                ${supervisorNeedsApproval(supervisor)
+                ${supervisor.status === "pending" || supervisorNeedsApproval(supervisor)
                   ? `<button class="btn btn-primary btn-sm" data-approve="${supervisor.id}"><i data-lucide="user-check"></i>Approve</button>
                      <button class="btn btn-ghost btn-sm" data-reject="${supervisor.id}"><i data-lucide="user-x"></i>Reject</button>`
                   : supervisor.is_active
                     ? `<button class="btn btn-ghost btn-sm" data-deactivate="${supervisor.id}"><i data-lucide="user-x"></i></button>`
-                    : `<button class="btn btn-outline btn-sm" data-approve="${supervisor.id}"><i data-lucide="user-check"></i>Reactivate</button>`}
+                    : `<button class="btn btn-outline btn-sm" data-approve="${supervisor.id}"><i data-lucide="user-check"></i>${supervisor.status === "rejected" ? "Reactivate" : "Approve"}</button>`}
               </td>
             </tr>`).join("")}
         </tbody>
@@ -85,21 +98,32 @@ async function renderSupervisors() {
   refreshIcons();
 
   const byId = new Map(response.results.map((supervisor) => [supervisor.id, supervisor]));
+  listRoot.querySelectorAll("[data-view]").forEach((btn) =>
+    btn.addEventListener("click", () => openSupervisorDetails(byId.get(Number(btn.dataset.view)))));
   listRoot.querySelectorAll("[data-edit]").forEach((btn) =>
     btn.addEventListener("click", () => openSupervisorForm(byId.get(Number(btn.dataset.edit)))));
-  // Approve / reactivate: activates the profile and its paired user account.
+  // Approve / reactivate: activates the profile and its paired user account,
+  // stamps the approving administrator and the decision time server-side.
   listRoot.querySelectorAll("[data-approve]").forEach((btn) =>
     btn.addEventListener("click", async () => {
       const supervisor = byId.get(Number(btn.dataset.approve));
-      const action = supervisorNeedsApproval(supervisor) ? "approve" : "reactivate";
+      const action = supervisor.status === "pending" || supervisorNeedsApproval(supervisor) ? "approve" : "reactivate";
       const message = action === "approve"
-        ? `Approve the supervisor account of ${supervisor.full_name}? They will be able to sign in immediately.`
+        ? `Confirm approval for ${supervisor.full_name}?\n\n`
+          + (supervisor.email ? `Email: ${supervisor.email}\n` : "")
+          + (supervisor.staff_id ? `Staff ID: ${supervisor.staff_id}\n` : "")
+          + (supervisor.department ? `Department: ${supervisor.department}\n` : "")
+          + (supervisor.title ? `Job title: ${supervisor.title}\n` : "")
+          + `\nThey will be able to sign in immediately.`
         : `Reactivate the supervisor account of ${supervisor.full_name}?`;
-      if (await confirmDialog(message, { okLabel: "Confirm" })) {
-        const response = await api.patch(`/supervisors/${supervisor.id}/`, { is_active: true }, { showErrors: false });
+      if (await confirmDialog(message, { okLabel: "Approve" })) {
+        const response = await api.post(`/supervisors/${supervisor.id}/approve/`, {}, { showErrors: false });
         if (response.ok) {
           toast(`Supervisor ${action === "approve" ? "approved" : "reactivated"}.`, "success");
           renderSupervisors();
+          renderPendingBanner();
+        } else {
+          toast(response.data?.detail || "Approval failed.", "error");
         }
       }
     }));
@@ -110,16 +134,7 @@ async function renderSupervisors() {
       // applicant is told their registration was not approved.
       btn.addEventListener("click", async () => {
         const supervisor = byId.get(Number(btn.dataset.reject));
-        const message =
-          `Reject the supervisor registration of ${supervisor.full_name} (${supervisor.email || "no email"})? ` +
-          "The account stays disabled and the applicant is notified that it was not approved.";
-        if (await confirmDialog(message, { danger: true, okLabel: "Reject" })) {
-          const response = await api.patch(`/supervisors/${supervisor.id}/`, { is_active: false }, { showErrors: false });
-          if (response.ok) {
-            toast("Supervisor registration rejected.", "success");
-            renderSupervisors();
-          }
-        }
+        openRejectSupervisorModal(supervisor);
       });
     });
   listRoot.querySelectorAll("[data-deactivate]").forEach((btn) =>
@@ -149,10 +164,77 @@ async function renderPendingBanner() {
   const names = response.results.map((s) => escapeHtml(s.full_name || s.username)).join(", ");
   section.querySelector("#pendingApprovalsBody").innerHTML = `
     <strong>${response.count} supervisor registration${response.count === 1 ? "" : "s"} awaiting approval</strong>
-    <p class="small">Review the details in the table below (Edit opens the full form), then use
+    <p class="small">Review the details in the table below (Details/Edit opens the full record), then use
     <em>Approve</em> to grant sign-in access or <em>Reject</em> to decline: ${names}</p>`;
   section.style.display = "";
   refreshIcons();
+}
+
+/** Administrator decline dialog: a written reason is required and stored. */
+function openRejectSupervisorModal(supervisor) {
+  const modal = openModal(`Reject registration - ${escapeHtml(supervisor.full_name)}`, `
+    <p class="small" style="margin-top:0">Reject the supervisor registration of
+    <strong>${escapeHtml(supervisor.full_name)}</strong> (${escapeHtml(supervisor.email || "no email")})?
+    The account stays disabled, the applicant is notified, and your reason is recorded.</p>
+    <form id="rejectForm" class="form-grid">
+      <div class="field full">
+        <label for="rejectReason">Rejection reason *</label>
+        <textarea id="rejectReason" name="reason" rows="3" required
+          placeholder="e.g. Staff ID could not be verified with the department"></textarea>
+      </div>
+    </form>
+    <div class="modal-actions" style="margin-top:1rem">
+      <button class="btn btn-ghost" data-cancel>Cancel</button>
+      <button class="btn btn-danger" id="rejectSave" style="background:var(--danger,#b3261e);color:#fff;border:none">
+        <i data-lucide="user-x"></i>Reject registration
+      </button>
+    </div>`);
+
+  modal.querySelector("[data-cancel]").addEventListener("click", closeModal);
+  modal.querySelector("#rejectSave").addEventListener("click", async () => {
+    const reason = modal.querySelector("#rejectReason").value.trim();
+    if (!reason) return toast("A rejection reason is required.", "error");
+    const response = await api.post(`/supervisors/${supervisor.id}/reject/`, { reason }, { showErrors: false });
+    if (response.ok) {
+      closeModal();
+      toast("Supervisor registration rejected.", "success");
+      renderSupervisors();
+      renderPendingBanner();
+    } else {
+      toast(response.data?.reason || response.data?.detail || "Rejection failed.", "error");
+    }
+  });
+  refreshIcons();
+}
+
+/** Administrator read-only details of a supervisor record / application. */
+function openSupervisorDetails(supervisor) {
+  const statusRow = () => {
+    if (supervisor.status === "pending") return '<span class="badge badge-pending">pending approval</span>';
+    return supervisorStatusBadge(supervisor);
+  };
+  const modal = openModal(`Supervisor details - ${escapeHtml(supervisor.full_name)}`, `
+    <div class="form-grid" style="margin-top:.25rem">
+      <div class="field"><span class="muted small">Full name</span><br><strong>${escapeHtml(supervisor.full_name)}</strong></div>
+      <div class="field"><span class="muted small">Username</span><br><span>${escapeHtml(supervisor.username)}</span></div>
+      <div class="field"><span class="muted small">Email</span><br><span>${escapeHtml(supervisor.email || "-")}</span></div>
+      <div class="field"><span class="muted small">Staff ID</span><br><span>${escapeHtml(supervisor.staff_id || "-")}</span></div>
+      <div class="field"><span class="muted small">Job title</span><br><span>${escapeHtml(supervisor.title || "-")}</span></div>
+      <div class="field"><span class="muted small">Department</span><br><span>${escapeHtml(supervisor.department || "-")}</span></div>
+      <div class="field"><span class="muted small">Registration date</span><br><span>${formatDateTime(supervisor.created_at)}</span></div>
+      <div class="field"><span class="muted small">Account status</span><br>${statusRow()}</div>
+      <div class="field"><span class="muted small">Assigned students</span><br><span>${supervisor.assigned_students}</span></div>
+      <div class="field"><span class="muted small">Approved on</span><br><span>${supervisor.approved_at ? formatDateTime(supervisor.approved_at) + (supervisor.approved_by_name ? " by " + escapeHtml(supervisor.approved_by_name) : "") : "-"}</span></div>
+      ${supervisor.status === "rejected" && supervisor.rejected_reason ? `
+      <div class="field full"><span class="muted small">Rejected on</span><br>
+        <span>${formatDateTime(supervisor.rejected_at)}${supervisor.rejected_by_name ? " by " + escapeHtml(supervisor.rejected_by_name) : ""}</span>
+        <p class="hint" style="margin:.35rem 0 0">Reason: ${escapeHtml(supervisor.rejected_reason)}</p>
+      </div>` : ""}
+    </div>
+    <div class="modal-actions" style="margin-top:1rem">
+      <button class="btn btn-primary" data-cancel>Close</button>
+    </div>`);
+  modal.querySelector("[data-cancel]").addEventListener("click", closeModal);
 }
 
 function openSupervisorForm(existing) {

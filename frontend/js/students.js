@@ -293,9 +293,16 @@ async function openPlacementForm(student) {
         <label for="plcSupervisor">Supervisor *</label>
         <select id="plcSupervisor" name="supervisor" required>
           <option value="">--</option>
-          ${studentsState.supervisors.map((supervisor) =>
-            `<option value="${supervisor.id}" ${supervisor.id === existing?.supervisor ? "selected" : ""}>${escapeHtml(supervisor.full_name)}</option>`).join("")}
+          ${studentsState.supervisors
+            .filter((s) => s.id === existing?.supervisor || s.status === "approved")
+            .map((supervisor) => {
+              const label = supervisor.id === existing?.supervisor && supervisor.status !== "approved"
+                ? `${supervisor.full_name} (currently assigned)`
+                : supervisor.full_name;
+              return `<option value="${supervisor.id}" ${supervisor.id === existing?.supervisor ? "selected" : ""}>${escapeHtml(label)}</option>`;
+            }).join("")}
         </select>
+        <p class="hint">Only approved supervisors can be selected.</p>
       </div>
       <div class="field">
         <label for="plcSession">SIWES session *</label>
